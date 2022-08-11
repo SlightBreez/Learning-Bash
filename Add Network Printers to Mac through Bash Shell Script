@@ -1,0 +1,219 @@
+#!/bin/bash
+
+echo
+echo
+echo "This script is meant to install an individual or group of printers on our network."
+echo
+echo
+echo "[------------INSTALL AN INDIVIDUAL PRINTER------------]"
+echo "|   EastColor    EastBW    WestColor    WestBW        |"
+echo "|     ArtFieryMiddle    ArtFieryRight    ArtBW        |"
+echo "[-----------------------------------------------------]"
+echo
+echo "[--------------INSTALL PRINTERS BY GROUPS-------------]"
+echo "|   East         West            Art                  |"
+echo "|   NotEast      NotWest         NotArt               |"
+echo "|   Color        ColorFiery      BW         All       |"
+echo "[-----------------------------------------------------]"
+echo
+echo
+
+#list for individual printers to be compared to later on
+iprinters=(EastColor EastBW WestColor WestBW ArtFieryMiddle ArtFieryRight ArtBW)
+
+#list for group printers to be compared to later on
+gprinters=(East West Art NotEast NotWest NotArt Color ColorFiery BW All)
+
+#initialize array for printer groups
+East=(EastColor EastBW)
+West=(WestColor WestBW)
+Art=(ArtFieryMiddle ArtFieryRight ArtBW)
+NotEast=(WestColor WestBW ArtFieryMiddle ArtFieryRight ArtBW)
+NotWest=(EastColor EastBW ArtFieryMiddle ArtFieryRight ArtBW)
+NotArt=(EastColor EastBW WestColor WestBW)
+Color=(EastColor WestColor)
+ColorFiery=(EastColor WestColor ArtFieryMiddle ArtFieryRight)
+BW=(EastBW  WestBW ArtBW)
+All=(EastColor EastBW WestColor WestBW ArtFieryMiddle ArtFieryRight ArtBW)
+
+
+while true
+do
+	echo "-----Choose 'individual' or 'group'"
+	read type
+	echo
+	if [ $type = "individual" -o $type = "group" ] ; then
+		break
+	else
+		echo "~Not a valid option!"
+		continue
+	fi
+done
+
+p2_install=() #array for the list of printers that need to be installed
+
+case "$type" in
+					#installing individual printers
+	individual)
+	while true
+	do
+		echo "-----Type in the name of the printer you want to install"
+		read printer
+		for i in "${iprinters[@]}"
+		do
+		if [ $printer = $i ] ; then
+			p2_install=("${p2_install[@]}" $printer)
+			echo
+			echo "~Do you want to install more printers? ('y' for yes, anything else for no)"
+			read ans
+			if [[ $ans = "y" ]] ; then
+				continue 2
+			else
+				break 5
+			fi
+		fi
+		done
+		echo "~Not a valid printer name!"
+	done
+	;;
+
+					#installing printers by groups
+	group)
+	g2_install=() #initializing empty group printer arrays which will be converted to individual printers later on
+	while true
+        do
+                echo "-----Type in the printer group you want to install"
+                read printer
+                for i in "${gprinters[@]}"
+                do
+                if [ $printer = $i ] ; then
+                        g2_install=("${g2_install[@]}" $printer)
+			echo "~Do you want to install more groups? ('y' for yes, anything else for no)"
+			read ans
+			if [[ $ans = "y" ]] ; then
+				continue 2
+			else
+                        	break 4
+			fi
+                fi
+                done
+                echo "~Not a valid printer group!"
+        done
+	;;
+esac
+
+#converting group list into individual printers to make installing easier
+if [ $type = "group" ] ; then
+	for i in "${g2_install[@]}"
+	do
+		case "$i" in
+		East) p2_install=("${p2_install[@]}" "${East[@]}")
+		;;
+		West) p2_install=("${p2_install[@]}" "${West[@]}")
+		;;
+		Art) p2_install=("${p2_install[@]}" "${Art[@]}")
+		;;
+		NotEast) p2_install=("${p2_install[@]}" "${NotEast[@]}")
+		;;
+		NotWest) p2_install=("${p2_install[@]}" "${NotWest[@]}")
+    		;;
+		NotArt) p2_install=("${p2_install[@]}" "${NotArt[@]}")
+    		;;
+		Color) p2_install=("${p2_install[@]}" "${Color[@]}")
+		;;
+		ColorFiery) p2_install=("${p2_install[@]}" "${ColorFiery[@]}")
+		;;
+		BW) p2_install=("${p2_install[@]}" "${BW[@]}")
+		;;
+		All) p2_install=("${p2_install[@]}" "${All[@]}")
+		esac
+	done
+fi
+
+echo "-----Installing Printer(s)"
+
+for i in "${p2_install[@]}"
+do
+	case "$i" in
+
+	EastColor)
+		echo "~Installing $i ..."
+		  /usr/sbin/lpadmin \
+		  	-p East_Side_Color \
+		  	-D "RICOH C2500" \
+		  	-L "33rd_Floor_East_Side" \
+		  	-v lpd://"10.0.3.75" \
+		  	-m Library/Printers/PPDs/Contents/Resources/RICOH\ Aficio\ MP\ C2500 \
+		  	-E
+  	 	;;
+
+	EastBW)
+		echo "~Installing $i ..."
+			/usr/bin/lpadmin \
+			  -p East_Side_BW \
+			  -D "RICOH IM 350F" \
+			  -L "33rd_Floor_East_Side" \
+			  -v lpd://"10.0.3.76" \
+			  -m Library/Printers/PPDs/Contents/Resources/RICOH\ IM\ 350 \
+			  -E
+      ;;
+
+	WestColor)
+		echo "~Installing $i ..."
+			/usr/sbin/lpadmin \
+			  -p West_Side_Color \
+			  -D "RICOH IM 4000" \
+			  -L "33rd_Floor_West_Side" \
+			  -v lpd://"10.0.3.68" \
+			  -m Library/Printers/PPDs/Contents/Resources/RICOH\ IM\ 4000 \
+			  -E
+		  ;;
+
+	WestBW)
+			 	 echo "~Installing $i ..."
+			/usr/bin/lpadmin \
+			  -p West_Side_BW \
+			  -D "RICOH IM 350F" \
+			  -L "33rd_Floor_West_Side" \
+			  -v lpd://"10.0.3.77" \
+			  -m Library/Printers/PPDs/Contents/Resources/RICOH\ IM\ 350 \
+        -E
+		;;
+
+	ArtFieryMiddle)
+			 	 echo "~Installing $i ..."
+			/usr/bin/lpadmin \
+			  -p Art_Room_Middle_Fiery \
+			  -D "Fiery - RICOH IM C4500" \
+			  -L "33rd_Floor_Art_Room" \
+			  -v lpd://"10.0.0.80" \
+			  -m Library/Printers/PPDs/Contents/Resources/RICOH\ Aficio\ MP\ C4500 \
+        -E
+	 	;;
+
+	ArtFieryRight)
+			 	 echo "~Installing $i ..."
+			/usr/bin/lpadmin \
+			  -p Art_Room_Right_Fiery \
+			  -D "Fiery - RICOH IM C4500" \
+			  -L "33rd_Floor_Art_Room" \
+			  -v lpd://"10.0.3.254" \
+			  -m Library/Printers/PPDs/Contents/Resources/RICOH\ Aficio\ MP\ C4500 \
+        -E
+		;;
+
+	ArtBW)
+			 	 echo "~Installing $i ..."
+			/usr/bin/lpadmin \
+			  -p Art_Room__BW \
+			  -D "RICOH IM 350F" \
+			  -L "33rd_Floor_Art_Room" \
+			  -v lpd://"10.0.3.124" \
+			  -m Library/Printers/PPDs/Contents/Resources/RICOH\ IM\ 350 \
+			  -E
+		;;
+	esac
+	echo " .... done"
+done
+
+echo "-----Finished"
